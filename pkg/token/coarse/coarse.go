@@ -139,7 +139,9 @@ func Convert(tokens token.Slice, input []byte) []Token {
 						coarse = append(coarse, tok)
 						i = end + 1
 					} else {
-						i++
+						end := skipToClosingBracket(tokens, i)
+						coarse = append(coarse, Token{Kind: Text, Start: tokens[i].Start, End: tokens[end].End})
+						i = end + 1
 					}
 				case kind.DirectiveVar:
 					// Variable: <! ... >

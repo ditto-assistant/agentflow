@@ -101,7 +101,11 @@ func (l *linter) check(tokens token.Slice) {
 	}
 
 	for _, f := range l.stack {
-		l.add(f.tok, SeverityError, "AF003", fmt.Sprintf("unclosed conditional <?%s>", f.path))
+		if f.loop {
+			l.add(f.tok, SeverityError, "AF003", fmt.Sprintf("unclosed loop <*%s>", f.path))
+		} else {
+			l.add(f.tok, SeverityError, "AF003", fmt.Sprintf("unclosed conditional <?%s>", f.path))
+		}
 	}
 	if !l.hasTitle && l.hasContent {
 		l.add(token.T{Start: 0, End: 0}, SeverityError, "AF001", "file has content but no .title section")
@@ -330,7 +334,7 @@ func isSymbolicOperator(op string) bool {
 func (l *linter) checkLoop(tokens token.Slice, start int) int {
 	end, content := l.directiveContent(tokens, start)
 	parts := strings.Fields(content)
-	if len(parts) != 4 || parts[2] != "as" || !identifierPattern.MatchString(parts[3]) || !strings.HasPrefix(parts[1], "[]") {
+	if len(parts) != 4 || parts[2] != "as" || !identifierPattern.MatchString(parts[3]) || (!strings.HasPrefix(parts[1], "[]") || len(parts[1]) == 2) {
 		l.add(tokens[start], SeverityError, "AF010", "expected <*path []Type as alias>")
 		return end
 	}

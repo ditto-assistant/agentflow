@@ -1,6 +1,7 @@
 package lint
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/omniaura/agentflow/pkg/assert/require"
@@ -68,4 +69,27 @@ func hasCode(diagnostics []Diagnostic, code string) bool {
 		}
 	}
 	return false
+}
+
+func TestLoopDiagnostics(t *testing.T) {
+	for _, tt := range []struct{ name, source, code, message string }{
+		{"missing element", ".title Test\n<*items [] as item></items>", "AF010", "expected <*path []Type as alias>"},
+		{"empty directive", ".title Test\nA<*>B", "AF010", "expected <*path []Type as alias>"},
+		{"unclosed loop", ".title Test\n<*items []Item as item>", "AF003", "unclosed loop <*items>"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ds := lintString(t, tt.source)
+			found := false
+			for _, d := range ds {
+				if d.Code == tt.code && d.Message == tt.message {
+					found = true
+				}
+			}
+			var err error
+			if !found {
+				err = fmt.Errorf("missing %s %q in %#v", tt.code, tt.message, ds)
+			}
+			require.NoError(t, err)
+		})
+	}
 }

@@ -156,6 +156,9 @@ func genLoopFile(w io.Writer, f ast.File, dir string) error {
 						condition = "len(" + expr + ") != 0"
 					} else if typ == "int" || strings.HasPrefix(typ, "float") {
 						condition = expr + " != 0"
+					} else if typ != "string" {
+						usesReflect = true
+						condition = "!reflect.ValueOf(&" + expr + ").Elem().IsZero()"
 					}
 					if vi.Operator == "" && strings.HasPrefix(expr, "input.") {
 						marker := fmt.Sprintf("__af_condition_%d__", ni)
