@@ -90,3 +90,28 @@ func TestArbitraryValuesAndNestedSlices(t *testing.T) {
 		t.Fatalf("%v\n%s\n%s", err, out, b.String())
 	}
 }
+
+func TestLoopsWithImplicitObjectsAndLexicalConditions(t *testing.T) {
+	source := ".title mixed\n<!account.name>:<*items []Item as item><?item.enabled bool><!item.name><*item.tags []string as tag><!item.name>=<!tag>;</item.tags><else>off</item.enabled></items><!account.count int>"
+	f, err := ast.NewFile("mixed.af", []byte(source))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var b bytes.Buffer
+	if err = gogen.GenFile(&b, f, "example"); err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	fixture := "package example\nimport \"testing\"\ntype Item struct{Name string; Enabled bool; Tags []string}\nfunc TestMixed(t *testing.T){v:=Mixed{Items:[]Item{{Name:\"A\",Enabled:true,Tags:[]string{\"x\",\"y\"}},{Name:\"B\"}}};v.Account.Name=\"owner\";v.Account.Count=2;if got:=v.String();got!=\"owner:AA=x;A=y;off2\"{t.Fatal(got)}}"
+	for name, content := range map[string]string{"go.mod": "module example\ngo 1.25.0\n", "mixed.go": b.String(), "mixed_test.go": fixture} {
+		if err = os.WriteFile(filepath.Join(dir, name), []byte(content), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	cmd := exec.Command("go", "test", "./...")
+	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "GOWORK=off")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("%v\n%s\n%s", err, out, b.String())
+	}
+}
