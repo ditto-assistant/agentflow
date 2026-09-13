@@ -105,7 +105,7 @@ func generateGranularSemanticTokens(doc *Document) []protocol.UInteger {
 			tokenType = TokenTypeTagOpen
 		case kind.CloseBracket:
 			tokenType = TokenTypeTagClose // Properly distinguish open from close brackets
-		case kind.DirectiveVar, kind.DirectiveCond, kind.DirectiveEnd, kind.DirectiveElse:
+		case kind.DirectiveVar, kind.DirectiveCond, kind.DirectiveEnd, kind.DirectiveElse, kind.DirectiveLoop:
 			tokenType = TokenTypeKeyword
 		case kind.VarName:
 			tokenType = TokenTypeVariable

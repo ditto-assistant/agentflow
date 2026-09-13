@@ -46,6 +46,7 @@ type frame struct {
 	path    string
 	tok     token.T
 	sawElse bool
+	loop    bool
 }
 
 var identifierPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
@@ -135,6 +136,8 @@ func (l *linter) checkDirective(tokens token.Slice, start int) int {
 		return start
 	}
 	switch tokens[start+1].Kind {
+	case kind.DirectiveLoop:
+		return l.checkLoop(tokens, start)
 	case kind.DirectiveVar:
 		return l.checkVar(tokens, start)
 	case kind.DirectiveCond:
@@ -219,6 +222,10 @@ func (l *linter) checkElse(tokens token.Slice, start int) int {
 		return end
 	}
 	top := &l.stack[len(l.stack)-1]
+	if top.loop {
+		l.add(tokens[start], SeverityError, "AF006", "else is not supported on a loop")
+		return end
+	}
 	if top.sawElse {
 		l.add(tokens[start], SeverityError, "AF005", fmt.Sprintf("duplicate else in conditional <?%s>", top.path))
 	}
@@ -318,4 +325,16 @@ func isOperator(op string) bool {
 
 func isSymbolicOperator(op string) bool {
 	return bytes.ContainsAny([]byte(op), "=<>!")
+}
+
+func (l *linter) checkLoop(tokens token.Slice, start int) int {
+	end, content := l.directiveContent(tokens, start)
+	parts := strings.Fields(content)
+	if len(parts) != 4 || parts[2] != "as" || !identifierPattern.MatchString(parts[3]) || !strings.HasPrefix(parts[1], "[]") {
+		l.add(tokens[start], SeverityError, "AF010", "expected <*path []Type as alias>")
+		return end
+	}
+	l.checkPath(tokens[start], parts[0])
+	l.stack = append(l.stack, frame{path: parts[0], tok: tokens[start], loop: true})
+	return end
 }
