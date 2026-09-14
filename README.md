@@ -351,6 +351,34 @@ Generate Go code from .af templates:
 
 ## Releases
 
+### Typed slice loops
+
+Use a Go slice type and a lexical alias:
+
+    .title system
+    <*extensions []Extension as extension>
+    <!extension.name>: <!extension.text>
+    </extensions>
+
+    .title user
+    <*names []string as name>Hello <!name>!</names>
+    <*scores []int as score><!score>,</scores>
+
+Declare Extension alongside the generated Go file. Exported fields use the
+existing dot notation. Annotate non-string fields, for example
+<!extension.priority int>. Nested loops retain access to outer aliases;
+shadowing active aliases is rejected. Close each block with its source path.
+Nil and empty slices render nothing; whitespace repeats exactly in slice order.
+No separators are inserted. Conditions and their else branches work inside loops.
+
+Local named Go types, pointers and nested slices are accepted as element types.
+Use concrete struct slices for nested field access; Go compilation checks fields.
+Direct non-string values use fmt.Sprint. Custom String methods retain their own
+semantics. Nil pointers may be printed, but dereferencing one through nested
+field access has ordinary Go panic behavior. Input strings are data and are
+never parsed as templates. Non-loop templates retain existing generation.
+
+
 Release history and changelogs are tracked in GitHub Releases:
 
 - `https://github.com/omniaura/agentflow/releases`

@@ -48,8 +48,9 @@ const (
 	BoolValue   // "true" in "<?active eq true>"
 
 	// Content
-	Text       // Regular text content
-	Whitespace // Spaces, tabs, newlines (separators)
+	Text          // Regular text content
+	Whitespace    // Spaces, tabs, newlines (separators)
+	DirectiveLoop // "*" in a slice loop
 
 	// Future extension tokens (for later)
 	// RawBlock       // For future raw block support
@@ -60,7 +61,7 @@ func (k Kind) IsTag() bool {
 	switch k {
 	case
 		OpenBracket, CloseBracket,
-		DirectiveVar, DirectiveCond, DirectiveEnd, DirectiveElse,
+		DirectiveVar, DirectiveCond, DirectiveEnd, DirectiveElse, DirectiveLoop,
 		VarName, TypeName, Operator, StringValue, IntValue, BoolValue:
 		return true
 	}
@@ -77,7 +78,7 @@ func (k Kind) IsBracket() bool {
 
 func (k Kind) IsDirective() bool {
 	switch k {
-	case DirectiveVar, DirectiveCond, DirectiveEnd, DirectiveElse:
+	case DirectiveVar, DirectiveCond, DirectiveEnd, DirectiveElse, DirectiveLoop:
 		return true
 	}
 	return false

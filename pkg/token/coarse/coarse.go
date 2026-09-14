@@ -34,6 +34,7 @@ const (
 	ElseBlock
 	EndTag
 	Text
+	LoopBlock
 )
 
 // Token represents a coarse-grained token for AST and code generation
@@ -130,6 +131,18 @@ func Convert(tokens token.Slice, input []byte) []Token {
 			// Group bracket sequences into logical units
 			if i+1 < len(tokens) {
 				switch tokens[i+1].Kind {
+				case kind.DirectiveLoop:
+					if tok, ok := groupVariableTokens(tokens, i); ok {
+						tok.Kind = LoopBlock
+						end := skipToClosingBracket(tokens, i)
+						tok.End = tokens[end].Start
+						coarse = append(coarse, tok)
+						i = end + 1
+					} else {
+						end := skipToClosingBracket(tokens, i)
+						coarse = append(coarse, Token{Kind: Text, Start: tokens[i].Start, End: tokens[end].End})
+						i = end + 1
+					}
 				case kind.DirectiveVar:
 					// Variable: <! ... >
 					if tok, ok := groupVariableTokens(tokens, i); ok {

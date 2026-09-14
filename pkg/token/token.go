@@ -189,6 +189,12 @@ func tryParseTag(input []byte, start int) []T {
 	}
 
 	switch input[start+1] {
+	case '*':
+		tags := parseVarTag(input, start)
+		if len(tags) > 1 {
+			tags[1].Kind = kind.DirectiveLoop
+		}
+		return tags
 	case '!':
 		return parseVarTag(input, start)
 	case '?':

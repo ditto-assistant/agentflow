@@ -55,6 +55,8 @@ func normalizeDirectives(tokens token.Slice, src []byte) []byte {
 		case kind.OpenBracket:
 			if next, ok := peek(tokens, i+1); ok {
 				switch next.Kind {
+				case kind.DirectiveLoop:
+					i = writeTag(&out, tokens, src, i, "<*", ">", true)
 				case kind.DirectiveVar:
 					i = writeTag(&out, tokens, src, i, "<!", ">", true)
 				case kind.DirectiveCond:
